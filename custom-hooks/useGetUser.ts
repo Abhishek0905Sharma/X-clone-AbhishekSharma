@@ -16,7 +16,10 @@ export const useGetUser = () => {
   const userId = session ? session.user.id : null;
 
   useEffect(() => {
-    if (!userId) return;
+  if (!userId) {
+    setLoading(false);
+    return;
+  }
 
     const fetchProfile = async () => {
   const supabase = getSupabaseClient(); // ✅ add this line
