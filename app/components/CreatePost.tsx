@@ -20,6 +20,9 @@ export default function CreatePost() {
   const isDisabled = post.trim() === "" && !imagePreview;
   const { loading, session, profile, gettingSession } = useGetUser();
   const { mutate, isPending } = usePostTweet();
+  const [location, setLocation] = useState<string | null>(null);
+  const [scheduledAt, setScheduledAt] = useState<string | null>(null);
+const [showScheduler, setShowScheduler] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -38,6 +41,23 @@ export default function CreatePost() {
   const onEmojiClick = (emojidata: EmojiClickData) => {
     setPost((prev) => prev + emojidata.emoji);
   };
+  const handleLocation = () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        window.open(mapsUrl, "_blank");
+        setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+      },
+      () => {
+        window.open("https://www.google.com/maps", "_blank");
+      }
+    );
+  } else {
+    window.open("https://www.google.com/maps", "_blank");
+  }
+};
 
   const PostTweet = () => {
     if (!post.trim() && !tweetImage) {
@@ -51,12 +71,15 @@ export default function CreatePost() {
         userId: session.user.id,
         content: post || null,
         tweetImage: tweetImage || null,
+        scheduledAt: scheduledAt || null,
       },
       {
         onSuccess: () => {
           setPost("");
           setImagePreview(null);
           setTweetImage(null);
+          setScheduledAt(null);
+setShowScheduler(false);
         },
         onError: (error) => {
           console.log("Failed to post tweet", error.message);
@@ -118,6 +141,25 @@ export default function CreatePost() {
             </button>
           </div>
         )}
+        {location && (
+  <div className="flex items-center gap-1 text-blue-400 text-sm mb-2">
+    <IoLocationOutline size={14} />
+    <span>{location}</span>
+    <button
+      onClick={() => setLocation(null)}
+      className="ml-1 text-secondary-text hover:text-white"
+    >
+      ✕
+    </button>
+  </div>
+)}
+{scheduledAt && (
+  <div className="flex items-center gap-1 text-blue-400 text-sm mb-2">
+    <RiCalendarScheduleLine size={14} />
+    <span>Scheduled: {new Date(scheduledAt).toLocaleString()}</span>
+    <button onClick={() => setScheduledAt(null)} className="ml-1 text-secondary-text hover:text-white">✕</button>
+  </div>
+)}
         <div className="flex justify-between py-4 items-center border-t border-border">
           <div className="flex gap-3">
             <div
@@ -132,12 +174,39 @@ export default function CreatePost() {
             >
               <FaRegFaceSmile size={20} />
             </div>
-            <div className="text-primary cursor-pointer">
-              <IoLocationOutline size={20} />
-            </div>
-            <div className="text-primary cursor-pointer">
-              <RiCalendarScheduleLine size={20} />
-            </div>
+            <div
+  className={`cursor-pointer ${location ? "text-blue-400" : "text-primary"}`}
+  onClick={handleLocation}
+  title="Add location"
+>
+  <IoLocationOutline size={20} />
+</div>
+            <div className="relative">
+  <div
+    className={`cursor-pointer ${scheduledAt ? "text-blue-400" : "text-primary"}`}
+    onClick={() => setShowScheduler(!showScheduler)}
+  >
+    <RiCalendarScheduleLine size={20} />
+  </div>
+  {showScheduler && (
+    <div className="absolute bottom-10 left-0 bg-[#1e2732] border border-border rounded-xl p-4 z-20 w-72 shadow-xl">
+      <p className="text-white font-bold mb-3">Schedule post</p>
+      <input
+        type="datetime-local"
+        min={new Date().toISOString().slice(0, 16)}
+        value={scheduledAt || ""}
+        onChange={(e) => setScheduledAt(e.target.value)}
+        className="w-full bg-black text-white border border-border rounded-lg p-2 text-sm outline-none"
+      />
+      <div className="flex gap-2 mt-3">
+        <button onClick={() => { setScheduledAt(null); setShowScheduler(false); }}
+          className="flex-1 border border-border text-white py-1 rounded-full text-sm">Clear</button>
+        <button onClick={() => setShowScheduler(false)}
+          className="flex-1 bg-[#1d9bf0] text-white py-1 rounded-full text-sm font-bold">Confirm</button>
+      </div>
+    </div>
+  )}
+</div>
           </div>
           {isDisabled ? (
             <button className="text-black bg-secondary-text py-2 px-5 font-semibold cursor-pointer rounded-full">

@@ -4,14 +4,17 @@ import ReplyPost from "@/components/ReplyPost";
 import Image from "next/image";
 import React from "react";
 import { BsThreeDots } from "react-icons/bs";
-import { supabase } from "../../../../lib/SupabaseClient";
+import { createClient } from "@supabase/supabase-js"; // ✅ use plain client for server
 import { Tweet } from "../../../../types/types";
 import moment from "moment";
 import TweetActions from "@/components/TweetActions";
 
-
-
 const getTweet = async (id: string) => {
+  const supabase = createClient( // ✅ create inline, server-side only
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   const { error, data } = await supabase
     .from("tweets")
     .select("*,profiles(id,username,avatar_url,name)")
@@ -25,10 +28,11 @@ const getTweet = async (id: string) => {
   return data;
 };
 
-export default async function Page({ params }: { params: Promise<{ postid: string }> }) { 
-  const postId = (await params).postid
+export default async function Page({ params }: { params: Promise<{ postid: string }> }) {
+  const postId = (await params).postid;
   const tweet: Tweet = await getTweet(postId);
   return (
+    // ... rest unchanged
     <div>
       <div className="flex justify-between items-center mb-3 px-4 py-2">
         <div className="text-white flex items-center gap-3">
@@ -50,15 +54,9 @@ export default async function Page({ params }: { params: Promise<{ postid: strin
         <div className="w-full">
           <div className="flex justify-between">
             <div className="flex gap-1 items-center text-sm">
-              <span className="text-white font-bold">
-                {tweet.profiles.name}
-              </span>
-              <span className="text-secondary-text">
-                @{tweet.profiles.username}
-              </span>
-              <span className="text-secondary-text">
-                {moment(tweet.created_at).fromNow()}
-              </span>
+              <span className="text-white font-bold">{tweet.profiles.name}</span>
+              <span className="text-secondary-text">@{tweet.profiles.username}</span>
+              <span className="text-secondary-text">{moment(tweet.created_at).fromNow()}</span>
             </div>
             <BsThreeDots className="text-secondary-text" />
           </div>
@@ -84,8 +82,8 @@ export default async function Page({ params }: { params: Promise<{ postid: strin
           />
         </div>
       </div>
-      <ReplyPost tweetId={tweet.id}/>
-      <Comments tweetId={tweet.id}/>
+      <ReplyPost tweetId={tweet.id} />
+      <Comments tweetId={tweet.id} />
     </div>
   );
 }

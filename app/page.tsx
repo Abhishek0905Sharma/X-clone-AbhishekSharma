@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signInUser } from "../services/auth";
 import { useRouter } from "next/navigation";
-import { supabase } from "../lib/SupabaseClient";
+import { getSupabaseClient } from "../lib/SupabaseClient";
 
 
 export default function Home() {
@@ -26,18 +26,19 @@ export default function Home() {
     } else {
       setMessage("Login successful");
       setTimeout(() => {
-        router.replace("/auth/callback");
+        router.replace("/auth/setup"); // ✅
       }, 2000);
     }
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({data:{session}}) => {
-      if(session){
-        router.replace("/auth/callback");
-      }      
-    })
-  },[router]);
+  const supabase = getSupabaseClient(); // ✅ add this
+  supabase.auth.getSession().then(({data:{session}}) => {
+    if(session){
+      router.replace("/auth/setup"); // ✅
+    }      
+  })
+},[router]);
   return (
     <div className="h-screen flex items-center justify-center">
       <div className="max-w-xs w-[95%] py-12 rounded-lg">

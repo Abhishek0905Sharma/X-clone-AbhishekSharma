@@ -1,14 +1,15 @@
-import { supabase } from "../lib/SupabaseClient";
+import { getSupabaseClient } from "../lib/SupabaseClient";
 
 export const createTweet = async (
   userId: string,
   content: string | null,
-  tweetImage: File | null
+  tweetImage: File | null,
+  scheduledAt: string | null = null
 ) => {
+  const supabase = getSupabaseClient(); // ✅
   let imageURL: null | string = null;
   let imagePath: null | string = null;
 
-  //handle image uploaded
   if (tweetImage) {
     const timestamp = Date.now();
     const path = `${timestamp}_${tweetImage.name}`;
@@ -22,20 +23,20 @@ export const createTweet = async (
       return;
     }
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("tweet-images").getPublicUrl(path);
+    const { data: { publicUrl } } = supabase.storage
+      .from("tweet-images")
+      .getPublicUrl(path);
 
     imageURL = publicUrl;
     imagePath = path;
   }
 
-  //save tweets
   const { error: insertError } = await supabase.from("tweets").insert({
     user_id: userId,
     content: content ? content : null,
     image_url: imageURL,
     image_path: imagePath,
+    scheduled_at: scheduledAt,
   });
 
   if (insertError) {
@@ -47,9 +48,11 @@ export const createTweet = async (
 };
 
 export const getTweets = async () => {
+  const supabase = getSupabaseClient(); // ✅
   const { error, data } = await supabase
     .from("tweets")
     .select(`*,profiles(id,username,name,avatar_url)`)
+    .is("scheduled_at", null)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -60,7 +63,7 @@ export const getTweets = async () => {
 };
 
 export const deleteTweet = async (tweetId: string, imagePath?: string) => {
-  //delete the tweet record
+  const supabase = getSupabaseClient(); // ✅
   const { error: deleteError } = await supabase
     .from("tweets")
     .delete()
@@ -76,8 +79,8 @@ export const deleteTweet = async (tweetId: string, imagePath?: string) => {
       .from("tweet-images")
       .remove([imagePath]);
 
-      if(imageError){
-        console.log("ImageDeleteError", imageError.message);        
-      }
+    if (imageError) {
+      console.log("ImageDeleteError", imageError.message);
+    }
   }
 };

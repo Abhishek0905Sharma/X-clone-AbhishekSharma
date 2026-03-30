@@ -1,10 +1,11 @@
-import { supabase } from "../lib/SupabaseClient";
+import { getSupabaseClient } from "../lib/SupabaseClient";
 
 export const createComment = async (
   userId: string,
   tweetId: string,
   content: string
 ) => {
+  const supabase = getSupabaseClient();
   const { error: insertError } = await supabase.from("comments").insert({
     user_id: userId,
     tweet_id: tweetId,
@@ -20,6 +21,7 @@ export const createComment = async (
 };
 
 export const getComments = async (tweetId: string) => {
+  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("comments")
     .select("*,profiles (id,name,username,avatar_url)")
@@ -35,6 +37,7 @@ export const getComments = async (tweetId: string) => {
 };
 
 export const deleteComment = async (commentId: string) => {
+  const supabase = getSupabaseClient();
   const { error } = await supabase
     .from("comments")
     .delete()
@@ -46,6 +49,7 @@ export const deleteComment = async (commentId: string) => {
 };
 
 export const getCommentsCount = async (tweetId: string) => {
+  const supabase = getSupabaseClient();
   const {error,count} = await supabase
     .from("comments")
     .select("id", { head: true, count: "exact" })

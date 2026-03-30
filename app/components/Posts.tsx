@@ -8,6 +8,7 @@ import { Tweet } from "../../types/types";
 import moment from "moment";
 import TweetActions from "./TweetActions";
 import { SpinnerCircularFixed } from "spinners-react";
+import { FiRepeat } from "react-icons/fi";
 
 export default function Posts() {
   const { isLoading, isError, error, data: tweets } = useGetTweets();
@@ -24,9 +25,18 @@ export default function Posts() {
       {tweets?.map((tweet: Tweet) => {
         return (
           <div
-            key={tweet.id}
-            className="px-4 py-2 flex gap-3 border-b border-border"
-          >
+  key={`${tweet.id}-${tweet.retweetedAt || tweet.created_at}`}
+  className="px-4 py-2 flex flex-col border-b border-border"
+>
+  {/* Retweet label */}
+  {tweet.isRetweet && (
+    <div className="flex items-center gap-2 text-xs text-green-400 mb-1 ml-12">
+      <FiRepeat size={12} />
+      <span>{tweet.retweetedBy?.name} retweeted</span>
+    </div>
+  )}
+
+  <div className="flex gap-3">
             <Image
               src={tweet.profiles.avatar_url}
               alt="profile-pic"
@@ -75,6 +85,7 @@ export default function Posts() {
                 isTweetPostViewPage={false}
               />
             </div>
+          </div>
           </div>
         );
       })}

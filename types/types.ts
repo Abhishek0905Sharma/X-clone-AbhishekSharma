@@ -5,6 +5,14 @@ export type Tweet = {
   image_url: string;
   created_at: string;
   image_Path: string;
+  retweetedAt?: string;
+  isRetweet?: boolean;
+  retweetedBy?: {
+    id: string;
+    name: string;
+    username: string;
+    avatar_url: string;
+  };
   profiles: {
     id: string;
     avatar_url: string;

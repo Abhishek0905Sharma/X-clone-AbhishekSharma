@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { supabase } from "../../../lib/SupabaseClient";
+import { getSupabaseClient } from "../../../lib/SupabaseClient"; // ✅
 import { useRouter } from "next/navigation";
 import { User } from "@supabase/supabase-js";
 
@@ -15,14 +15,13 @@ export default function Page() {
 
   const setupUserProfile = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    const supabase = getSupabaseClient(); // ✅
     if (!name || !username || !image) {
       setMessage("All fields are required!");
       return;
     }
 
-    //upload user avatar
     const timestamp = Date.now();
-
     const imagePath = `${timestamp}_${image.name}`;
     const { error: imgError } = await supabase.storage
       .from("avatars")
@@ -33,12 +32,9 @@ export default function Page() {
       return;
     }
 
-    //generate the PublicURL from the image uploaded
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("avatars").getPublicUrl(imagePath);
-
-    //insert data to the profiles table
+    const { data: { publicUrl } } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(imagePath);
 
     const { error: insertError } = await supabase.from("profiles").insert({
       username,
@@ -60,12 +56,9 @@ export default function Page() {
   };
 
   useEffect(() => {
+    const supabase = getSupabaseClient(); // ✅
     const handleAuth = async () => {
-      //checking if a user has registered
-      const {
-        error: userError,
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { error: userError, data: { user } } = await supabase.auth.getUser();
 
       if (userError || !user) {
         router.replace("/auth/signup");
@@ -74,7 +67,6 @@ export default function Page() {
 
       setUser(user);
 
-      //check if user already has a profile
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -97,6 +89,7 @@ export default function Page() {
 
   if (isChecking)
     return <h1 className="text-white text-xl">Checking Profile</h1>;
+
   return (
     <div className="h-screen flex items-center justify-center">
       <div className="max-w-[300px] w-[95%] py-12 rounded-lg">
@@ -130,10 +123,9 @@ export default function Page() {
             onChange={(e) => {
               const files = e.target.files;
               if (!files) return;
-              const file = files[0];
-              setImage(file);
+              setImage(files[0]);
             }}
-            accept="images/*"
+            accept="image/*"
             id="avatar"
             type="file"
             className="w-full bg-background outline-none rounded-md p-4 placeholder-secondary-text border border-border text-white"

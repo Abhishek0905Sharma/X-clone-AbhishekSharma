@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useUserSession } from "./useUserSession";
-import { supabase } from "../lib/SupabaseClient";
-
+import { getSupabaseClient } from "../lib/SupabaseClient";
 type Profile = {
+  id: string;
   username: string;
   avatar_url: string;
   email: string;
@@ -19,11 +19,12 @@ export const useGetUser = () => {
     if (!userId) return;
 
     const fetchProfile = async () => {
-      const {data,error} = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .maybeSingle();
+  const supabase = getSupabaseClient(); // ✅ add this line
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
 
         if(error){
             console.log("ProfileError:",error.message);

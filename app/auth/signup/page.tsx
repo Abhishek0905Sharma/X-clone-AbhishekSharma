@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signUpUser } from "../../../services/auth";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../../lib/SupabaseClient";
+import { getSupabaseClient } from "../../../lib/SupabaseClient"; // ✅
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -11,31 +11,32 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const router = useRouter();
 
-  const signup = async (e:React.SyntheticEvent) => {
+  const signup = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    if(!email.trim() || !password.trim()){
-        setMessage("All fields are required!");
-        return;
+    if (!email.trim() || !password.trim()) {
+      setMessage("All fields are required!");
+      return;
     }
 
-    const result = await signUpUser(email,password);
-    if(result?.error){
-        setMessage(result.error);
+    const result = await signUpUser(email, password);
+    if (result?.error) {
+      setMessage(result.error);
     } else {
-        setMessage("Signup successful");
-        setTimeout(() => {
-            router.replace("/auth/callback")            
-        }, 2000);
+      setMessage("Signup successful!");
+      setTimeout(() => {
+        router.replace("/home");
+      }, 1000);
     }
-  }
+  };
 
-   useEffect(() => {
-      supabase.auth.getSession().then(({data:{session}}) => {
-        if(session){
-          router.replace("/auth/callback");
-        }      
-      })
-    },[router]);
+  useEffect(() => {
+    const supabase = getSupabaseClient(); // ✅
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.replace("/home");
+      }
+    });
+  }, [router]);
 
   return (
     <div className="h-screen flex items-center justify-center">
@@ -48,26 +49,25 @@ export default function Home() {
             {message}
           </p>
         )}
-       <form onSubmit={signup}>
-         <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          type="text"
-          placeholder="Email"
-          className="mb-6 w-full bg-background outline-none rounded-md p-4 placeholder-secondary-text border border-border text-white"
-        />
-        <input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          type="text"
-          placeholder="Password"
-          className="w-full bg-background outline-none rounded-md p-4 placeholder-secondary-text border border-border text-white"
-        />
-        <button className="text-black w-full mt-8 rounded-full h-10 flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-200 font-semibold bg-white">
-          Continue
-        </button>
-       </form>
-
+        <form onSubmit={signup}>
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Email"
+            className="mb-6 w-full bg-background outline-none rounded-md p-4 placeholder-secondary-text border border-border text-white"
+          />
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="text"
+            placeholder="Password"
+            className="w-full bg-background outline-none rounded-md p-4 placeholder-secondary-text border border-border text-white"
+          />
+          <button className="text-black w-full mt-8 rounded-full h-10 flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-200 font-semibold bg-white">
+            Continue
+          </button>
+        </form>
         <div className="text-secondary-text mt-8">
           <span className="mr-1">Already have an account?</span>
           <Link href="/" className="text-primary">
